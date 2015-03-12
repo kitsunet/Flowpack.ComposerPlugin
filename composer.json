@@ -10,6 +10,6 @@
     }
   },
   "extra": {
-    "class": "Flowpack\\ComposerPlugin\\Plugin",
+    "class": "Flowpack\\ComposerPlugin\\Plugin"
   }
 }
