@@ -5,7 +5,7 @@ namespace Flowpack\ComposerPlugin;
  * Custom installer for flow packages.
  *
  */
-class Installer implements \Composer\Installer\InstallerInterface {
+class Installer extends \Composer\Installer\LibraryInstaller implements \Composer\Installer\InstallerInterface {
 
 	/**
 	 * Allowed package type prefixes for valid flow packages.
@@ -14,6 +14,11 @@ class Installer implements \Composer\Installer\InstallerInterface {
 	 */
 	protected $allowedPackageTypePrefixes = array('typo3-flow-');
 
+	/**
+	 * Flow package type to path mapping templates.
+	 *
+	 * @var array
+	 */
 	protected $packageTypeToPathMapping = array(
 		'plugin' => 'Packages/Plugins/{flowPackageName}/',
 		'site' => 'Packages/Sites/{flowPackageName}/',
@@ -34,51 +39,6 @@ class Installer implements \Composer\Installer\InstallerInterface {
 		}
 
 		return TRUE;
-	}
-
-	/**
-	 * Checks that provided package is installed.
-	 *
-	 * @param \Composer\Repository\InstalledRepositoryInterface $repo repository in which to check
-	 * @param \Composer\Package\PackageInterface $package package instance
-	 *
-	 * @return bool
-	 */
-	public function isInstalled(\Composer\Repository\InstalledRepositoryInterface $repo, \Composer\Package\PackageInterface $package) {
-		// TODO: Implement isInstalled() method.
-	}
-
-	/**
-	 * Installs specific package.
-	 *
-	 * @param \Composer\Repository\InstalledRepositoryInterface $repo repository in which to check
-	 * @param \Composer\Package\PackageInterface $package package instance
-	 */
-	public function install(\Composer\Repository\InstalledRepositoryInterface $repo, \Composer\Package\PackageInterface $package) {
-		// TODO: Implement install() method.
-	}
-
-	/**
-	 * Updates specific package.
-	 *
-	 * @param \Composer\Repository\InstalledRepositoryInterface $repo repository in which to check
-	 * @param \Composer\Package\PackageInterface $initial already installed package version
-	 * @param \Composer\Package\PackageInterface $target updated version
-	 *
-	 * @throws \Composer\Installer\InvalidArgumentException if $initial package is not installed
-	 */
-	public function update(\Composer\Repository\InstalledRepositoryInterface $repo, \Composer\Package\PackageInterface $initial, \Composer\Package\PackageInterface $target) {
-		// TODO: Implement update() method.
-	}
-
-	/**
-	 * Uninstalls specific package.
-	 *
-	 * @param \Composer\Repository\InstalledRepositoryInterface $repo repository in which to check
-	 * @param \Composer\Package\PackageInterface $package package instance
-	 */
-	public function uninstall(\Composer\Repository\InstalledRepositoryInterface $repo, \Composer\Package\PackageInterface $package) {
-		// TODO: Implement uninstall() method.
 	}
 
 	/**
@@ -150,7 +110,7 @@ class Installer implements \Composer\Installer\InstallerInterface {
 	 * @param  array $vars
 	 * @return array
 	 */
-	public function deriveFlowPackageKey(\Composer\Package\PackageInterface $package) {
+	protected function deriveFlowPackageKey(\Composer\Package\PackageInterface $package) {
 		$autoload = $package->getAutoload();
 		if (isset($autoload['psr-0']) && is_array($autoload['psr-0'])) {
 			$namespace = key($autoload['psr-0']);
