@@ -1,0 +1,21 @@
+<?php
+namespace Flowpack\ComposerPlugin;
+
+/**
+ * A composer plugin to install flow packages.
+ *
+ */
+class Plugin implements \Composer\Plugin\PluginInterface {
+
+	/**
+	 * Add the Flow package installer
+	 *
+	 * @param \Composer\Composer $composer
+	 * @param \Composer\IO\IOInterface $io
+	 */
+	public function activate(\Composer\Composer $composer, \Composer\IO\IOInterface $io) {
+		$installer = new Installer();
+		$composer->getInstallationManager()->addInstaller($installer);
+	}
+
+}
