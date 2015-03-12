@@ -120,8 +120,8 @@ class Installer extends \Composer\Installer\LibraryInstaller implements \Compose
 			$flowPackageName = rtrim(str_replace('\\', '.', $namespace), '.');
 		} else {
 			$extras = $package->getExtra();
-			if (isset($extras['flowPackageName'])) {
-				$flowPackageName = $extras['flowPackageName'];
+			if (isset($extras['installer-name'])) {
+				$flowPackageName = $extras['installer-name'];
 			} else {
 				// FIXME: This should never happen, but we will try to make something useful anyway.
 				$composerType = $package->getType();
