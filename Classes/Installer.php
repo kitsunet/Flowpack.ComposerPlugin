@@ -50,7 +50,7 @@ class Installer extends \Composer\Installer\LibraryInstaller implements \Compose
 	public function getInstallPath(\Composer\Package\PackageInterface $package) {
 		$flowPackageType = $this->getFlowPackageType($package->getType());
 		$camelCasedType = $this->camelCaseFlowPackageType($flowPackageType);
-		$flowPackageName = $this->deriveFlowPackageKey($package);
+		$flowPackageName = $this->deriveFlowPackageName($package);
 
 		if (isset($this->packageTypeToPathMapping[$flowPackageType])) {
 			$installPath = $this->packageTypeToPathMapping[$flowPackageType];
@@ -108,9 +108,9 @@ class Installer extends \Composer\Installer\LibraryInstaller implements \Compose
 	 * Find the correct Flow package name for the given package.
 	 *
 	 * @param  array $vars
-	 * @return array
+	 * @return string
 	 */
-	protected function deriveFlowPackageKey(\Composer\Package\PackageInterface $package) {
+	protected function deriveFlowPackageName(\Composer\Package\PackageInterface $package) {
 		$autoload = $package->getAutoload();
 		if (isset($autoload['psr-0']) && is_array($autoload['psr-0'])) {
 			$namespace = key($autoload['psr-0']);
@@ -118,6 +118,17 @@ class Installer extends \Composer\Installer\LibraryInstaller implements \Compose
 		} elseif (isset($autoload['psr-4']) && is_array($autoload['psr-4'])) {
 			$namespace = key($autoload['psr-4']);
 			$flowPackageName = rtrim(str_replace('\\', '.', $namespace), '.');
+		} else {
+			$extras = $package->getExtra();
+			if (isset($extras['flowPackageName'])) {
+				$flowPackageName = $extras['flowPackageName'];
+			} else {
+				// FIXME: This should never happen, but we will try to make something useful anyway.
+				$composerType = $package->getType();
+				$typeParts = explode('/', $composerType);
+				arrray_map('ucfirst', $typeParts);
+				$flowPackageName = implode('.', $typeParts);
+			}
 		}
 
 		return $flowPackageName;
