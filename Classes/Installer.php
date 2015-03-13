@@ -1,11 +1,14 @@
 <?php
 namespace Flowpack\ComposerPlugin;
+use Composer\Package\PackageInterface;
+use Composer\Installer\InstallerInterface;
+use Composer\Installer\LibraryInstaller;
 
 /**
  * Custom installer for flow packages.
  *
  */
-class Installer extends \Composer\Installer\LibraryInstaller implements \Composer\Installer\InstallerInterface {
+class Installer extends LibraryInstaller implements InstallerInterface {
 
 	/**
 	 * Allowed package type prefixes for valid flow packages.
@@ -31,7 +34,7 @@ class Installer extends \Composer\Installer\LibraryInstaller implements \Compose
 	 * Decides if the installer supports the given type
 	 *
 	 * @param  string $packageType
-	 * @return bool
+	 * @return boolean
 	 */
 	public function supports($packageType) {
 		if ($this->getFlowPackageType($packageType) === FALSE) {
@@ -44,10 +47,10 @@ class Installer extends \Composer\Installer\LibraryInstaller implements \Compose
 	/**
 	 * Returns the installation path of a package
 	 *
-	 * @param  \Composer\Package\PackageInterface $package
-	 * @return string           path
+	 * @param  PackageInterface $package
+	 * @return string path to install the packgae in
 	 */
-	public function getInstallPath(\Composer\Package\PackageInterface $package) {
+	public function getInstallPath(PackageInterface $package) {
 		$flowPackageType = $this->getFlowPackageType($package->getType());
 		$camelCasedType = $this->camelCaseFlowPackageType($flowPackageType);
 		$flowPackageName = $this->deriveFlowPackageName($package);
@@ -58,10 +61,14 @@ class Installer extends \Composer\Installer\LibraryInstaller implements \Compose
 			$installPath = $this->packageTypeToPathMapping['*'];
 		}
 
-		return $this->replacePlaceHoldersInPath($installPath, compact('flowPackageType', 'camelCasedType', 'flowPackageName'));
+		return $this->replacePlaceholdersInPath($installPath, compact('flowPackageType', 'camelCasedType', 'flowPackageName'));
 	}
 
 	/**
+	 * Camel case the flow package type.
+	 * "framework" => "Framework"
+	 * "some-project" => "SomeProject"
+	 *
 	 * @param string $flowPackageType
 	 * @return string
 	 */
@@ -72,13 +79,13 @@ class Installer extends \Composer\Installer\LibraryInstaller implements \Compose
 	}
 
 	/**
-	 * Replace path placeholders in the install path.
+	 * Replace placeholders in the install path.
 	 *
 	 * @param string $path
 	 * @param array $arguments
 	 * @return string
 	 */
-	protected function replacePlaceHoldersInPath($path, $arguments) {
+	protected function replacePlaceholdersInPath($path, $arguments) {
 		foreach ($arguments as $argumentName => $argumentValue) {
 			$path = str_replace('{' . $argumentName . '}', $argumentValue, $path);
 		}
@@ -106,29 +113,37 @@ class Installer extends \Composer\Installer\LibraryInstaller implements \Compose
 
 	/**
 	 * Find the correct Flow package name for the given package.
+	 * Will try the following order:
 	 *
-	 * @param  array $vars
+	 * - composer manifest "extras.installer-name"
+	 * - first PSR-0 autoloading namespace
+	 * - first PSR-4 autoloading namespace
+	 * - composer package name (Does not work in all cases but common cases should be fine. Eg. "foo/bar" => "Foo.Bar", "foo/bar-baz" => "Foo.Bar.Baz")
+	 *
+	 * @param PackageInterface $package
 	 * @return string
 	 */
-	protected function deriveFlowPackageName(\Composer\Package\PackageInterface $package) {
+	protected function deriveFlowPackageName(PackageInterface $package) {
+		$flowPackageName = '';
+		$extras = $package->getExtra();
 		$autoload = $package->getAutoload();
-		if (isset($autoload['psr-0']) && is_array($autoload['psr-0'])) {
+		if (isset($extras['installer-name'])) {
+			$flowPackageName = $extras['installer-name'];
+		} elseif (isset($autoload['psr-0']) && is_array($autoload['psr-0'])) {
 			$namespace = key($autoload['psr-0']);
 			$flowPackageName = str_replace('\\', '.', $namespace);
 		} elseif (isset($autoload['psr-4']) && is_array($autoload['psr-4'])) {
 			$namespace = key($autoload['psr-4']);
 			$flowPackageName = rtrim(str_replace('\\', '.', $namespace), '.');
 		} else {
-			$extras = $package->getExtra();
-			if (isset($extras['installer-name'])) {
-				$flowPackageName = $extras['installer-name'];
-			} else {
-				// FIXME: This should never happen, but we will try to make something useful anyway.
-				$composerType = $package->getType();
-				$typeParts = explode('/', $composerType);
-				arrray_map('ucfirst', $typeParts);
-				$flowPackageName = implode('.', $typeParts);
-			}
+			$composerName = $package->getName();
+			$nameParts = explode('/', $composerName);
+			$nameParts = array_map(function($element) {
+				$subParts = explode('-', $element);
+				$subParts = array_map('ucfirst', $subParts);
+				return implode('.', $subParts);
+			}, $nameParts);
+			$flowPackageName = implode('.', $nameParts);
 		}
 
 		return $flowPackageName;
