@@ -15,7 +15,7 @@ class Installer extends LibraryInstaller implements InstallerInterface {
 	 *
 	 * @var array
 	 */
-	protected $allowedPackageTypePrefixes = array('typo3-flow-');
+	protected $allowedPackageTypePrefixes = array('typo3-flow-', 'neos-');
 
 	/**
 	 * Flow package type to path mapping templates.
@@ -27,6 +27,7 @@ class Installer extends LibraryInstaller implements InstallerInterface {
 		'site' => 'Packages/Sites/{flowPackageName}/',
 		'boilerplate' => 'Packages/Boilerplates/{flowPackageName}/',
 		'build' => 'Build/{flowPackageName}/',
+		'package-collection' => 'Packages/{flowPackageName}/',
 		'*' => 'Packages/{camelCasedType}/{flowPackageName}/'
 	);
 
